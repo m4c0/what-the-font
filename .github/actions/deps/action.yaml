@@ -1,0 +1,12 @@
+name: Prepare Deps
+runs:
+  using: composite
+  steps:
+    - uses: m4c0/hai/.github/actions/deps@main
+    - uses: actions/checkout@v3
+      with:
+        repository: m4c0/what-the-font
+        path: what-the-font
+        submodules: true
+
+

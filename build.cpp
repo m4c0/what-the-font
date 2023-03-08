@@ -3,9 +3,14 @@
 using namespace ecow;
 
 int main(int argc, char **argv) {
-  auto all = unit::create<seq>("all");
-  all->add_unit<>("freetype")->add_include_dir("freetype/include");
-  all->add_unit<>("harfbuzz");
+  auto m = unit::create<mod>("what_the_font");
+  m->add_include_dir("harfbuzz/src");
+  m->add_include_dir("freetype/include");
+  m->add_unit<>("freetype")->add_include_dir("freetype/include");
+  m->add_unit<>("harfbuzz");
 
-  return run_main(all, argc, argv);
+  auto poc = unit::create<app>("poc");
+  poc->add_ref(m);
+  poc->add_unit<>("poc");
+  return run_main(poc, argc, argv);
 }

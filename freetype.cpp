@@ -23,4 +23,5 @@ void longjmp(jmp_buf env, int val) { abort(); }
 #include "freetype/src/raster/raster.c"
 #include "freetype/src/sfnt/sfnt.c"
 #include "freetype/src/smooth/smooth.c"
+#include "freetype/src/truetype/truetype.c"
 }

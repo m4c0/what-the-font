@@ -7,9 +7,9 @@ int main(int argc, char **argv) {
   m->add_include_dir("harfbuzz/src");
   m->add_include_dir("freetype/include");
   m->add_unit<>("freetype")->add_include_dir("freetype/include");
-  m->add_unit<>("harfbuzz");
+  m->add_unit<>("harfbuzz")->add_include_dir("freetype/include");
 
-  auto poc = unit::create<app>("poc");
+  auto poc = unit::create<exe>("poc");
   poc->add_ref(m);
   poc->add_unit<>("poc");
   return run_main(poc, argc, argv);

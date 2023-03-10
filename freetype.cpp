@@ -5,6 +5,7 @@ struct jmp_buf {
 };
 void abort();
 void longjmp(jmp_buf env, int val) { abort(); }
+int setjmp(jmp_buf env) {}
 #endif
 
 #define FT_CONFIG_MODULES_H "../../../ftmodule.h"

@@ -1,2 +1,4 @@
+*.ttf
+*.otf
 build
 out

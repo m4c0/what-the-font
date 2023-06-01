@@ -6,19 +6,26 @@ export module what_the_font;
 namespace wtf {
 constexpr const auto test_font = "VictorMono-Regular.otf";
 
-export [[nodiscard]] bool poc(unsigned char *img, unsigned img_w,
-                              unsigned img_h) {
-  // TODO: log FT errors
+export class ft_error {
+  FT_Error m_error;
 
+public:
+  explicit constexpr ft_error(FT_Error err) : m_error{err} {}
+
+  // TODO: use FT_Error_String(err) to get the message
+};
+
+void check(FT_Error err) {
+  if (err)
+    throw ft_error{err};
+}
+
+export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   FT_Library ft_library;
-  if (auto err = FT_Init_FreeType(&ft_library)) {
-    return false;
-  }
+  check(FT_Init_FreeType(&ft_library));
 
   FT_Face ft_face;
-  if (auto err = FT_New_Face(ft_library, test_font, 0, &ft_face)) {
-    return false;
-  }
+  check(FT_New_Face(ft_library, test_font, 0, &ft_face));
 
   FT_Set_Char_Size(ft_face, 0, 128 * 64, 0, 0);
 
@@ -37,9 +44,8 @@ export [[nodiscard]] bool poc(unsigned char *img, unsigned img_w,
   auto pen_x = 32;
   auto pen_y = 128;
   for (auto i = 0; i < count; i++) {
-    if (auto err = FT_Load_Glyph(ft_face, info[i].codepoint,
-                                 FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL))
-      return false;
+    check(FT_Load_Glyph(ft_face, info[i].codepoint,
+                        FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL));
 
     auto slot = ft_face->glyph;
     auto &bmp = slot->bitmap;
@@ -67,6 +73,5 @@ export [[nodiscard]] bool poc(unsigned char *img, unsigned img_w,
 
   hb_font_destroy(hb_font);
   hb_buffer_destroy(buf);
-  return true;
 }
 } // namespace wtf

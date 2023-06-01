@@ -93,7 +93,7 @@ public:
   }
 };
 
-class library {
+export class library {
   FT_Library m_library;
 
 public:
@@ -107,14 +107,4 @@ public:
     return face{f};
   }
 };
-
-export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
-  library l{};
-
-  constexpr const auto test_font = "VictorMono-Regular.otf";
-  auto f = l.new_face(test_font, 128);
-
-  f.shape_pt("Coração").draw(img, img_w, img_h, 32, 128);
-  f.shape_pt("Estudante").draw(img, img_w, img_h, 32, 256);
-}
 } // namespace wtf

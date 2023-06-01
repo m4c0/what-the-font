@@ -40,12 +40,11 @@ public:
     FT_Reference_Face(f);
   }
 
-  void draw(unsigned char *img, unsigned img_w, unsigned img_h) const {
+  void draw(unsigned char *img, unsigned img_w, unsigned img_h, int pen_x,
+            int pen_y) const {
     unsigned count;
     auto info = hb_buffer_get_glyph_infos(*m_buffer, &count);
     auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
-    auto pen_x = 32;
-    auto pen_y = 128;
     for (auto i = 0; i < count; i++) {
       auto slot = load_glyph(info[i].codepoint);
       auto &bmp = slot->bitmap;
@@ -115,7 +114,7 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   constexpr const auto test_font = "VictorMono-Regular.otf";
   auto f = l.new_face(test_font, 128);
 
-  f.shape_pt("Coração").draw(img, img_w, img_h);
-  f.shape_pt("Estudante").draw(img, img_w, img_h);
+  f.shape_pt("Coração").draw(img, img_w, img_h, 32, 128);
+  f.shape_pt("Estudante").draw(img, img_w, img_h, 32, 256);
 }
 } // namespace wtf

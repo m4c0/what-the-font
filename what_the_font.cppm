@@ -23,6 +23,7 @@ class face {
   struct deleter {
     void operator()(FT_Face f) { FT_Done_Face(f); }
     void operator()(hb_font_t *f) { hb_font_destroy(f); }
+    void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
   };
 
   hai::value_holder<FT_Face, deleter> m_face;
@@ -34,11 +35,21 @@ public:
 
   [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
 
-  auto load_glyph(unsigned index) const {
+  [[nodiscard]] auto load_glyph(unsigned index) const {
     constexpr const auto flags = FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL;
     check(FT_Load_Glyph(*m_face, index, flags));
 
     return (*m_face)->glyph;
+  }
+
+  [[nodiscard]] auto shape_pt(const char *msg) {
+    auto buf = hb_buffer_create();
+    hb_buffer_add_utf8(buf, msg, -1, 0, -1);
+    hb_buffer_set_direction(buf, HB_DIRECTION_LTR);
+    hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
+    hb_buffer_set_language(buf, hb_language_from_string("pt", -1));
+    hb_shape(*m_font, buf, nullptr, 0);
+    return hai::value_holder<hb_buffer_t *, deleter>(buf);
   }
 };
 
@@ -63,17 +74,11 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   constexpr const auto test_font = "VictorMono-Regular.otf";
   auto f = l.new_face(test_font, 128);
 
-  auto buf = hb_buffer_create();
-  hb_buffer_add_utf8(buf, "Coração", -1, 0, -1);
-  hb_buffer_set_direction(buf, HB_DIRECTION_LTR);
-  hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
-  hb_buffer_set_language(buf, hb_language_from_string("pt", -1));
-
-  hb_shape(*f, buf, nullptr, 0);
+  auto buf = f.shape_pt("Coração");
 
   unsigned count;
-  auto info = hb_buffer_get_glyph_infos(buf, &count);
-  auto pos = hb_buffer_get_glyph_positions(buf, &count);
+  auto info = hb_buffer_get_glyph_infos(*buf, &count);
+  auto pos = hb_buffer_get_glyph_positions(*buf, &count);
   auto pen_x = 32;
   auto pen_y = 128;
   for (auto i = 0; i < count; i++) {
@@ -100,7 +105,5 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
     pen_x += pos[i].x_advance / 64;
     pen_y += pos[i].y_advance / 64;
   }
-
-  hb_buffer_destroy(buf);
 }
 } // namespace wtf

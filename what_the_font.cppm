@@ -4,8 +4,6 @@ module;
 export module what_the_font;
 
 namespace wtf {
-constexpr const auto test_font = "VictorMono-Regular.otf";
-
 export class ft_error {
   FT_Error m_error;
 
@@ -20,14 +18,26 @@ void check(FT_Error err) {
     throw ft_error{err};
 }
 
+class library {
+  FT_Library m_library;
+
+public:
+  library() { check(FT_Init_FreeType(&m_library)); }
+
+  [[nodiscard]] auto new_face(const char *font, unsigned size) {
+    FT_Face face;
+    check(FT_New_Face(m_library, font, 0, &face));
+
+    FT_Set_Char_Size(face, 0, size * 64, 0, 0);
+    return face;
+  }
+};
+
 export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
-  FT_Library ft_library;
-  check(FT_Init_FreeType(&ft_library));
+  library l{};
 
-  FT_Face ft_face;
-  check(FT_New_Face(ft_library, test_font, 0, &ft_face));
-
-  FT_Set_Char_Size(ft_face, 0, 128 * 64, 0, 0);
+  constexpr const auto test_font = "VictorMono-Regular.otf";
+  FT_Face ft_face = l.new_face(test_font, 128);
 
   auto buf = hb_buffer_create();
   hb_buffer_add_utf8(buf, "Coração", -1, 0, -1);

@@ -1,22 +1,23 @@
 module;
 #include "hb-ft.h"
 
-extern "C" int printf(const char *, ...);
-
 export module what_the_font;
 
 namespace wtf {
 constexpr const auto test_font = "VictorMono-Regular.otf";
 
-export [[nodiscard]] int poc() {
+export [[nodiscard]] bool poc(unsigned char *img, unsigned img_w,
+                              unsigned img_h) {
+  // TODO: log FT errors
+
   FT_Library ft_library;
   if (auto err = FT_Init_FreeType(&ft_library)) {
-    return err;
+    return false;
   }
 
   FT_Face ft_face;
   if (auto err = FT_New_Face(ft_library, test_font, 0, &ft_face)) {
-    return err;
+    return false;
   }
 
   FT_Set_Char_Size(ft_face, 0, 128 * 64, 0, 0);
@@ -30,11 +31,6 @@ export [[nodiscard]] int poc() {
   auto hb_font = hb_ft_font_create_referenced(ft_face);
   hb_shape(hb_font, buf, nullptr, 0);
 
-  printf("P2\n1024 256 256\n");
-  constexpr const auto img_w = 1024;
-  constexpr const auto img_h = 256;
-  unsigned char img[img_w * img_h]{};
-
   unsigned count;
   auto info = hb_buffer_get_glyph_infos(buf, &count);
   auto pos = hb_buffer_get_glyph_positions(buf, &count);
@@ -43,7 +39,7 @@ export [[nodiscard]] int poc() {
   for (auto i = 0; i < count; i++) {
     if (auto err = FT_Load_Glyph(ft_face, info[i].codepoint,
                                  FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL))
-      return err;
+      return false;
 
     auto slot = ft_face->glyph;
     auto &bmp = slot->bitmap;
@@ -68,11 +64,9 @@ export [[nodiscard]] int poc() {
     pen_x += pos[i].x_advance / 64;
     pen_y += pos[i].y_advance / 64;
   }
-  for (auto c : img)
-    printf("%d ", c);
 
   hb_font_destroy(hb_font);
   hb_buffer_destroy(buf);
-  return 0;
+  return true;
 }
 } // namespace wtf

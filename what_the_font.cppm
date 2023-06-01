@@ -2,6 +2,7 @@ module;
 #include "hb-ft.h"
 
 export module what_the_font;
+import hai;
 
 namespace wtf {
 export class ft_error {
@@ -18,6 +19,29 @@ void check(FT_Error err) {
     throw ft_error{err};
 }
 
+class face {
+  struct deleter {
+    void operator()(FT_Face f) { FT_Done_Face(f); }
+    void operator()(hb_font_t *f) { hb_font_destroy(f); }
+  };
+
+  hai::value_holder<FT_Face, deleter> m_face;
+  hai::value_holder<hb_font_t *, deleter> m_font;
+
+public:
+  explicit face(FT_Face f)
+      : m_face{f}, m_font{hb_ft_font_create_referenced(f)} {}
+
+  [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
+
+  auto load_glyph(unsigned index) const {
+    constexpr const auto flags = FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL;
+    check(FT_Load_Glyph(*m_face, index, flags));
+
+    return (*m_face)->glyph;
+  }
+};
+
 class library {
   FT_Library m_library;
 
@@ -25,11 +49,11 @@ public:
   library() { check(FT_Init_FreeType(&m_library)); }
 
   [[nodiscard]] auto new_face(const char *font, unsigned size) {
-    FT_Face face;
-    check(FT_New_Face(m_library, font, 0, &face));
+    FT_Face f;
+    check(FT_New_Face(m_library, font, 0, &f));
 
-    FT_Set_Char_Size(face, 0, size * 64, 0, 0);
-    return face;
+    FT_Set_Char_Size(f, 0, size * 64, 0, 0);
+    return face{f};
   }
 };
 
@@ -37,7 +61,7 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   library l{};
 
   constexpr const auto test_font = "VictorMono-Regular.otf";
-  FT_Face ft_face = l.new_face(test_font, 128);
+  auto f = l.new_face(test_font, 128);
 
   auto buf = hb_buffer_create();
   hb_buffer_add_utf8(buf, "Coração", -1, 0, -1);
@@ -45,8 +69,7 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
   hb_buffer_set_language(buf, hb_language_from_string("pt", -1));
 
-  auto hb_font = hb_ft_font_create_referenced(ft_face);
-  hb_shape(hb_font, buf, nullptr, 0);
+  hb_shape(*f, buf, nullptr, 0);
 
   unsigned count;
   auto info = hb_buffer_get_glyph_infos(buf, &count);
@@ -54,10 +77,7 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
   auto pen_x = 32;
   auto pen_y = 128;
   for (auto i = 0; i < count; i++) {
-    check(FT_Load_Glyph(ft_face, info[i].codepoint,
-                        FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL));
-
-    auto slot = ft_face->glyph;
+    auto slot = f.load_glyph(info[i].codepoint);
     auto &bmp = slot->bitmap;
     for (auto by = 0; by < bmp.rows; by++) {
       for (auto bx = 0; bx < bmp.width; bx++) {
@@ -81,7 +101,6 @@ export void poc(unsigned char *img, unsigned img_w, unsigned img_h) {
     pen_y += pos[i].y_advance / 64;
   }
 
-  hb_font_destroy(hb_font);
   hb_buffer_destroy(buf);
 }
 } // namespace wtf

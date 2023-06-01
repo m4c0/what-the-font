@@ -82,14 +82,21 @@ public:
 
   [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
 
-  [[nodiscard]] auto shape_pt(const char *msg) {
+  [[nodiscard]] auto shape_latin_ltr(const char *msg, const char *lang) {
     auto buf = hb_buffer_create();
     hb_buffer_add_utf8(buf, msg, -1, 0, -1);
     hb_buffer_set_direction(buf, HB_DIRECTION_LTR);
     hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
-    hb_buffer_set_language(buf, hb_language_from_string("pt", -1));
+    hb_buffer_set_language(buf, hb_language_from_string(lang, -1));
     hb_shape(*m_font, buf, nullptr, 0);
     return buffer{*m_face, buf};
+  }
+
+  [[nodiscard]] auto shape_en(const char *msg) {
+    return shape_latin_ltr(msg, "en");
+  }
+  [[nodiscard]] auto shape_pt(const char *msg) {
+    return shape_latin_ltr(msg, "pt");
   }
 };
 

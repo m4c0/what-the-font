@@ -113,5 +113,15 @@ public:
     FT_Set_Char_Size(f, 0, size * 64, 0, 0);
     return face{f};
   }
+
+  [[nodiscard]] auto new_memory_face(const void *data, unsigned data_size,
+                                     unsigned size) {
+    FT_Face f;
+    check(FT_New_Memory_Face(m_library, static_cast<const FT_Byte *>(data),
+                             data_size, 0, &f));
+
+    FT_Set_Char_Size(f, 0, size * 64, 0, 0);
+    return face{f};
+  }
 };
 } // namespace wtf

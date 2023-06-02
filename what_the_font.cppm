@@ -72,7 +72,7 @@ public:
   }
 };
 
-class face {
+export class face {
   hai::value_holder<FT_Face, deleter> m_face;
   hai::value_holder<hb_font_t *, deleter> m_font;
 

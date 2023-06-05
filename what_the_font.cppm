@@ -14,8 +14,14 @@ public:
   // TODO: use FT_Error_String(err) to get the message
 };
 void check(FT_Error err) {
-  if (err)
-    throw ft_error{err};
+  if (!err)
+    return;
+
+#ifdef __wasm__
+  abort();
+#else
+  throw ft_error{err};
+#endif
 }
 
 struct deleter {

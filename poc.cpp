@@ -1,3 +1,4 @@
+import jute;
 import what_the_font;
 
 extern "C" int printf(const char *, ...);
@@ -18,7 +19,7 @@ int main() {
   constexpr const auto test_font = "VictorMono-Regular.otf";
   auto f = l.new_face(test_font, font_h);
 
-  constexpr const char *text[]{
+  constexpr jute::view text[]{
       "Minha terra tem palmeiras,",
       "Onde canta o Sabiá;",
       "As aves, que aqui gorjeiam,",

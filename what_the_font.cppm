@@ -3,6 +3,7 @@ module;
 
 export module what_the_font;
 import hai;
+import jute;
 
 namespace wtf {
 export class ft_error {
@@ -103,9 +104,9 @@ public:
 
   [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
 
-  [[nodiscard]] auto shape_latin_ltr(const char *msg, const char *lang) {
+  [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     auto buf = hb_buffer_create();
-    hb_buffer_add_utf8(buf, msg, -1, 0, -1);
+    hb_buffer_add_utf8(buf, msg.data(), msg.size(), 0, -1);
     hb_buffer_set_direction(buf, HB_DIRECTION_LTR);
     hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
     hb_buffer_set_language(buf, hb_language_from_string(lang, -1));
@@ -113,10 +114,10 @@ public:
     return buffer{*m_face, buf};
   }
 
-  [[nodiscard]] auto shape_en(const char *msg) {
+  [[nodiscard]] auto shape_en(jute::view msg) {
     return shape_latin_ltr(msg, "en");
   }
-  [[nodiscard]] auto shape_pt(const char *msg) {
+  [[nodiscard]] auto shape_pt(jute::view msg) {
     return shape_latin_ltr(msg, "pt");
   }
 };

@@ -46,6 +46,21 @@ public:
     FT_Reference_Face(f);
   }
 
+  auto bounding_box() const {
+    struct box {
+      int w{};
+      int h{};
+    } res;
+    unsigned count;
+    auto info = hb_buffer_get_glyph_infos(*m_buffer, &count);
+    auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
+    for (auto i = 0; i < count; i++) {
+      res.w += pos[i].x_advance / 64;
+      res.h += pos[i].y_advance / 64;
+    }
+    return res;
+  }
+
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int pen_x,
             int pen_y) const {
     unsigned count;

@@ -1,3 +1,4 @@
+#pragma leco tool
 import jute;
 import what_the_font;
 

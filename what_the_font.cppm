@@ -1,5 +1,6 @@
 module;
-#include "hb-ft.h"
+#pragma leco add_impl freetype harfbuzz
+#include "harfbuzz/src/hb-ft.h"
 
 export module what_the_font;
 import hai;

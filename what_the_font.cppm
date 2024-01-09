@@ -55,7 +55,6 @@ public:
       int h{};
     } res;
     unsigned count;
-    auto info = hb_buffer_get_glyph_infos(*m_buffer, &count);
     auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
     for (auto i = 0; i < count; i++) {
       res.w += pos[i].x_advance / 64;

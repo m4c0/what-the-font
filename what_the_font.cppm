@@ -65,6 +65,10 @@ public:
 
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int pen_x,
             int pen_y) const {
+    draw(img, img_w, img_h, &pen_x, &pen_y);
+  }
+  void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
+            int *pen_y) const {
     unsigned count;
     auto info = hb_buffer_get_glyph_infos(*m_buffer, &count);
     auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
@@ -73,8 +77,8 @@ public:
       auto &bmp = slot->bitmap;
       for (auto by = 0; by < bmp.rows; by++) {
         for (auto bx = 0; bx < bmp.width; bx++) {
-          auto x = bx + slot->bitmap_left + pen_x;
-          auto y = by - slot->bitmap_top + pen_y;
+          auto x = bx + slot->bitmap_left + *pen_x;
+          auto y = by - slot->bitmap_top + *pen_y;
           auto bp = by * bmp.pitch + bx;
 
           if ((x < 0) || (x >= img_w))
@@ -89,8 +93,8 @@ public:
           ii = ii > bi ? ii : bi;
         }
       }
-      pen_x += pos[i].x_advance / 64;
-      pen_y += pos[i].y_advance / 64;
+      *pen_x += pos[i].x_advance / 64;
+      *pen_y += pos[i].y_advance / 64;
     }
   }
 };

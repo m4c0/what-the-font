@@ -47,7 +47,16 @@ public:
     m_idx++;
     return *this;
   }
-  constexpr auto operator*() { return m_idx; }
+  constexpr auto operator*() {
+    struct res {
+      hb_glyph_position_t *pos;
+      hb_glyph_info_t *info;
+    };
+    return res{
+        .pos = m_pos + m_idx,
+        .info = m_info + m_idx,
+    };
+  }
 };
 class glyph_list {
   unsigned m_count{};
@@ -79,18 +88,16 @@ public:
     FT_Reference_Face(f);
   }
 
-  [[nodiscard]] auto glyphs() { return glyph_list{*m_buffer}; }
+  [[nodiscard]] auto glyphs() const { return glyph_list{*m_buffer}; }
 
   auto bounding_box() const {
     struct box {
       int w{};
       int h{};
     } res;
-    unsigned count;
-    auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
-    for (auto i = 0; i < count; i++) {
-      res.w += pos[i].x_advance / 64;
-      res.h += pos[i].y_advance / 64;
+    for (auto g : glyphs()) {
+      res.w += g.pos->x_advance / 64;
+      res.h += g.pos->y_advance / 64;
     }
     return res;
   }
@@ -101,11 +108,8 @@ public:
   }
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
             int *pen_y) const {
-    unsigned count;
-    auto info = hb_buffer_get_glyph_infos(*m_buffer, &count);
-    auto pos = hb_buffer_get_glyph_positions(*m_buffer, &count);
-    for (auto i = 0; i < count; i++) {
-      auto slot = load_glyph(info[i].codepoint);
+    for (auto g : glyphs()) {
+      auto slot = load_glyph(g.info->codepoint);
       auto &bmp = slot->bitmap;
       for (auto by = 0; by < bmp.rows; by++) {
         for (auto bx = 0; bx < bmp.width; bx++) {
@@ -125,8 +129,8 @@ public:
           ii = ii > bi ? ii : bi;
         }
       }
-      *pen_x += pos[i].x_advance / 64;
-      *pen_y += pos[i].y_advance / 64;
+      *pen_x += g.pos->x_advance / 64;
+      *pen_y += g.pos->y_advance / 64;
     }
   }
 };

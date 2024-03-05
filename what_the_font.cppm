@@ -1,9 +1,5 @@
-module;
-#pragma leco add_impl freetype harfbuzz
-#pragma leco add_include_dir "freetype/include"
-#include "harfbuzz/src/hb-ft.h"
-
 export module what_the_font;
+import :wrapper;
 import hai;
 import jute;
 
@@ -73,8 +69,7 @@ class buffer {
   hai::value_holder<hb_buffer_t *, deleter> m_buffer;
 
   [[nodiscard]] auto load_glyph(unsigned index) const {
-    constexpr const auto flags = FT_LOAD_RENDER | FT_RENDER_MODE_NORMAL;
-    check(FT_Load_Glyph(*m_face, index, flags));
+    check(FT_Load_Glyph(*m_face, index, ft_load_render));
 
     return (*m_face)->glyph;
   }

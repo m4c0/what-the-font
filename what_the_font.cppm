@@ -33,6 +33,41 @@ struct deleter {
   void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
 };
 
+class glyph_iter {
+  unsigned m_idx;
+  hb_glyph_position_t *m_pos{};
+  hb_glyph_info_t *m_info{};
+
+public:
+  glyph_iter(hb_glyph_position_t *p, hb_glyph_info_t *i, unsigned idx)
+      : m_idx{idx}
+      , m_pos{p}
+      , m_info{i} {}
+
+  constexpr auto operator==(const glyph_iter &o) const {
+    return m_idx == o.m_idx && m_pos == o.m_pos && m_info == o.m_info;
+  }
+  constexpr auto &operator++() {
+    m_idx++;
+    return *this;
+  }
+  constexpr auto operator*() { return m_idx; }
+};
+class glyph_list {
+  unsigned m_count{};
+  hb_glyph_position_t *m_pos{};
+  hb_glyph_info_t *m_info{};
+
+public:
+  explicit glyph_list(hb_buffer_t *b) {
+    m_info = hb_buffer_get_glyph_infos(b, &m_count);
+    m_pos = hb_buffer_get_glyph_positions(b, &m_count);
+  }
+
+  auto begin() const { return glyph_iter{m_pos, m_info, 0}; }
+  auto end() const { return glyph_iter{m_pos, m_info, m_count}; }
+};
+
 class buffer {
   hai::value_holder<FT_Face, deleter> m_face;
   hai::value_holder<hb_buffer_t *, deleter> m_buffer;
@@ -48,6 +83,8 @@ public:
   buffer(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
     FT_Reference_Face(f);
   }
+
+  [[nodiscard]] auto glyphs() { return glyph_list{*m_buffer}; }
 
   auto bounding_box() const {
     struct box {

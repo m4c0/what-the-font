@@ -34,8 +34,17 @@ int main() {
     f.shape_pt(line).draw(img, img_w, img_h, x, y);
   }
 
+  unsigned char charmap[img_w * img_h]{};
+  for (auto line : text) {
+    for (auto i : f.shape_pt(line).glyphs()) {
+      charmap[i] = 255;
+    }
+  }
+
   yoyo::file_writer out{"out/result.pgm"};
-  out.writef("P2\n%d %d 256\n", img_w, img_h).take(fail);
+  out.writef("P2\n%d %d 256\n", img_w, img_h * 2).take(fail);
   for (auto c : img)
+    out.writef("%d ", c).take(fail);
+  for (auto c : charmap)
     out.writef("%d ", c).take(fail);
 }

@@ -29,6 +29,11 @@ struct deleter {
   void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
 };
 
+static auto load_glyph(FT_Face f, unsigned index) {
+  check(FT_Load_Glyph(f, index, ft_load_render));
+  return f->glyph;
+}
+
 class glyph_iter {
   unsigned m_idx;
   hb_glyph_position_t *m_pos{};
@@ -59,6 +64,7 @@ public:
   }
 };
 class glyph_list {
+  hai::value_holder<FT_Face, deleter> m_face;
   hai::value_holder<hb_buffer_t *, deleter> m_buffer;
 
   unsigned m_count{};
@@ -66,7 +72,7 @@ class glyph_list {
   hb_glyph_info_t *m_info{};
 
 public:
-  explicit glyph_list(hb_buffer_t *b) : m_buffer{b} {
+  explicit glyph_list(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
     hb_buffer_reference(b);
     m_info = hb_buffer_get_glyph_infos(b, &m_count);
     m_pos = hb_buffer_get_glyph_positions(b, &m_count);
@@ -80,18 +86,12 @@ class buffer {
   hai::value_holder<FT_Face, deleter> m_face;
   hai::value_holder<hb_buffer_t *, deleter> m_buffer;
 
-  [[nodiscard]] auto load_glyph(unsigned index) const {
-    check(FT_Load_Glyph(*m_face, index, ft_load_render));
-
-    return (*m_face)->glyph;
-  }
-
 public:
   buffer(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
     FT_Reference_Face(f);
   }
 
-  [[nodiscard]] auto glyphs() const { return glyph_list{*m_buffer}; }
+  [[nodiscard]] auto glyphs() const { return glyph_list{*m_face, *m_buffer}; }
 
   auto bounding_box() const {
     struct box {
@@ -112,7 +112,7 @@ public:
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
             int *pen_y) const {
     for (auto g : glyphs()) {
-      auto slot = load_glyph(g.info->codepoint);
+      auto slot = load_glyph(*m_face, g.info->codepoint);
       auto &bmp = slot->bitmap;
       for (auto by = 0; by < bmp.rows; by++) {
         for (auto bx = 0; bx < bmp.width; bx++) {

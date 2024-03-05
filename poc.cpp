@@ -1,11 +1,12 @@
 #pragma leco tool
 import jute;
+import silog;
 import yoyo;
 import what_the_font;
 
 void fail(const char *msg) { throw 0; }
 
-int main() {
+int main() try {
   wtf::library l{};
 
   constexpr const auto img_w = 1024;
@@ -47,4 +48,6 @@ int main() {
     out.writef("%d ", c).take(fail);
   for (auto c : charmap)
     out.writef("%d ", c).take(fail);
+} catch (const wtf::ft_error &e) {
+  silog::log(silog::error, "Failed with freetype error [%s]", e.what());
 }

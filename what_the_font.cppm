@@ -5,10 +5,10 @@ import jute;
 
 namespace wtf {
 export class ft_error {
-  FT_Error m_error;
+  // FT_Error m_error;
 
 public:
-  explicit constexpr ft_error(FT_Error err) : m_error{err} {}
+  explicit constexpr ft_error(FT_Error err) {} //: m_error{err} {}
 
   // TODO: use FT_Error_String(err) to get the message
 };

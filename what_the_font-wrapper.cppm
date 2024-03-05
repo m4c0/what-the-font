@@ -31,6 +31,7 @@ constexpr const auto hb_buffer_destroy = &::hb_buffer_destroy;
 constexpr const auto hb_buffer_get_glyph_infos = &::hb_buffer_get_glyph_infos;
 constexpr const auto hb_buffer_get_glyph_positions =
     &::hb_buffer_get_glyph_positions;
+constexpr const auto hb_buffer_reference = &::hb_buffer_reference;
 constexpr const auto hb_buffer_set_direction = &::hb_buffer_set_direction;
 constexpr const auto hb_buffer_set_language = &::hb_buffer_set_language;
 constexpr const auto hb_buffer_set_script = &::hb_buffer_set_script;

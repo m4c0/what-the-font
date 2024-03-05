@@ -59,12 +59,15 @@ public:
   }
 };
 class glyph_list {
+  hai::value_holder<hb_buffer_t *, deleter> m_buffer;
+
   unsigned m_count{};
   hb_glyph_position_t *m_pos{};
   hb_glyph_info_t *m_info{};
 
 public:
-  explicit glyph_list(hb_buffer_t *b) {
+  explicit glyph_list(hb_buffer_t *b) : m_buffer{b} {
+    hb_buffer_reference(b);
     m_info = hb_buffer_get_glyph_infos(b, &m_count);
     m_pos = hb_buffer_get_glyph_positions(b, &m_count);
   }

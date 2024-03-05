@@ -148,6 +148,12 @@ public:
 
   [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
 
+  [[nodiscard]] auto load_glyph(unsigned index) const {
+    check(FT_Load_Glyph(*m_face, index, ft_load_render));
+
+    return (*m_face)->glyph;
+  }
+
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     auto buf = hb_buffer_create();
     hb_buffer_add_utf8(buf, msg.data(), msg.size(), 0, -1);

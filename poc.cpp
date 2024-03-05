@@ -1,8 +1,9 @@
 #pragma leco tool
 import jute;
+import yoyo;
 import what_the_font;
 
-extern "C" int printf(const char *, ...);
+void fail(const char *msg) { throw 0; }
 
 int main() {
   wtf::library l{};
@@ -33,7 +34,8 @@ int main() {
     f.shape_pt(line).draw(img, img_w, img_h, x, y);
   }
 
-  printf("P2\n1024 256 256\n");
+  yoyo::file_writer out{"out/result.pgm"};
+  out.writef("P2\n%d %d 256\n", img_w, img_h).take(fail);
   for (auto c : img)
-    printf("%d ", c);
+    out.writef("%d ", c).take(fail);
 }

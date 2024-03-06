@@ -21,6 +21,20 @@ public:
   constexpr auto x_advance() const noexcept { return m_pos->x_advance / 64; }
   constexpr auto y_advance() const noexcept { return m_pos->y_advance / 64; }
 
+  constexpr auto bitmap_rect() const noexcept {
+    struct {
+      int x;
+      int y;
+      int w;
+      int h;
+    } res;
+    res.x = (*m_face)->glyph->bitmap_left;
+    res.y = (*m_face)->glyph->bitmap_top;
+    res.w = (*m_face)->glyph->bitmap.width;
+    res.h = (*m_face)->glyph->bitmap.rows;
+    return res;
+  }
+
   auto load_glyph() {
     check(FT_Load_Glyph(*m_face, m_info->codepoint, ft_load_render));
     return (*m_face)->glyph;
@@ -28,7 +42,7 @@ public:
 
   void blit(unsigned char *img, unsigned img_w, unsigned img_h, unsigned pen_x,
             unsigned pen_y) {
-    auto slot = load_glyph();
+    auto slot = (*m_face)->glyph;
     auto &bmp = slot->bitmap;
     for (auto by = 0; by < bmp.rows; by++) {
       for (auto bx = 0; bx < bmp.width; bx++) {
@@ -118,6 +132,7 @@ public:
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
             int *pen_y) const {
     for (auto g : glyphs()) {
+      g.load_glyph();
       g.blit(img, img_w, img_h, *pen_x, *pen_y);
       *pen_x += g.x_advance();
       *pen_y += g.y_advance();

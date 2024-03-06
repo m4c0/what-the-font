@@ -35,7 +35,7 @@ int main() try {
     f.shape_pt(line).draw(img, img_w, img_h, x, y);
   }
 
-  unsigned charid[10240];
+  unsigned charid[10240]; // TODO: max(codepoint) or hashmap
   unsigned curid{};
   unsigned char charmap[img_w * img_h]{};
   unsigned px{};
@@ -48,14 +48,14 @@ int main() try {
 
       g.load_glyph();
       auto [x, y, w, h] = g.bitmap_rect();
-
-      id = ++curid;
-      g.blit(charmap, img_w, img_h, px - x + 1, py + y + 1);
-      px += w + 2; // TODO: fix overflow
-      if (px > img_w) {
+      if (px + w + 2 > img_w / 2) { // half width forces line break
         px = 0;
         py += font_h; // TODO: max(h + 2)
       }
+
+      id = ++curid;
+      g.blit(charmap, img_w, img_h, px - x + 1, py + y + 1);
+      px += w + 2;
     }
   }
 

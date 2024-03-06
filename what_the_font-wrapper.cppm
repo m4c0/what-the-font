@@ -18,6 +18,7 @@ using hb_glyph_position_t = ::hb_glyph_position_t;
 constexpr const auto ft_load_render = FT_LOAD_RENDER;
 
 constexpr const auto FT_Done_Face = &::FT_Done_Face;
+constexpr const auto FT_Done_FreeType = &::FT_Done_FreeType;
 constexpr const auto FT_Error_String = &::FT_Error_String;
 constexpr const auto FT_Init_FreeType = &::FT_Init_FreeType;
 constexpr const auto FT_Load_Glyph = &::FT_Load_Glyph;

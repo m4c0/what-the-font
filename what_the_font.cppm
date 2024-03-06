@@ -1,34 +1,11 @@
 export module what_the_font;
+export import :error;
+import :raii;
 import :wrapper;
 import hai;
 import jute;
 
 namespace wtf {
-export class ft_error {
-  FT_Error m_error;
-
-public:
-  explicit constexpr ft_error(FT_Error err) : m_error{err} {}
-
-  auto what() const { return FT_Error_String(m_error); }
-};
-void check(FT_Error err) {
-  if (!err)
-    return;
-
-#ifdef __wasm__
-  abort();
-#else
-  throw ft_error{err};
-#endif
-}
-
-struct deleter {
-  void operator()(FT_Face f) { FT_Done_Face(f); }
-  void operator()(hb_font_t *f) { hb_font_destroy(f); }
-  void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
-};
-
 class glyph {
   FT_Face m_face;
   hb_glyph_position_t *m_pos;
@@ -76,8 +53,8 @@ public:
   }
 };
 class glyph_list {
-  hai::value_holder<FT_Face, deleter> m_face;
-  hai::value_holder<hb_buffer_t *, deleter> m_buffer;
+  hai::value_holder<FT_Face, raii::deleter> m_face;
+  hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
 
   unsigned m_count{};
   hb_glyph_position_t *m_pos{};
@@ -95,8 +72,8 @@ public:
 };
 
 class buffer {
-  hai::value_holder<FT_Face, deleter> m_face;
-  hai::value_holder<hb_buffer_t *, deleter> m_buffer;
+  hai::value_holder<FT_Face, raii::deleter> m_face;
+  hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
 
 public:
   buffer(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
@@ -151,12 +128,13 @@ public:
 };
 
 export class face {
-  hai::value_holder<FT_Face, deleter> m_face;
-  hai::value_holder<hb_font_t *, deleter> m_font;
+  hai::value_holder<FT_Face, raii::deleter> m_face;
+  hai::value_holder<hb_font_t *, raii::deleter> m_font;
 
 public:
   explicit face(FT_Face f)
-      : m_face{f}, m_font{hb_ft_font_create_referenced(f)} {}
+      : m_face{f}
+      , m_font{hb_ft_font_create_referenced(f)} {}
 
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     auto buf = hb_buffer_create();
@@ -177,14 +155,12 @@ public:
 };
 
 export class library {
-  FT_Library m_library;
+  raii::library m_library{};
 
 public:
-  library() { check(FT_Init_FreeType(&m_library)); }
-
   [[nodiscard]] auto new_face(const char *font, unsigned size) {
     FT_Face f;
-    check(FT_New_Face(m_library, font, 0, &f));
+    check(FT_New_Face(*m_library, font, 0, &f));
 
     FT_Set_Char_Size(f, 0, size * 64, 0, 0);
     return face{f};
@@ -193,7 +169,7 @@ public:
   [[nodiscard]] auto new_memory_face(const void *data, unsigned data_size,
                                      unsigned size) {
     FT_Face f;
-    check(FT_New_Memory_Face(m_library, static_cast<const FT_Byte *>(data),
+    check(FT_New_Memory_Face(*m_library, static_cast<const FT_Byte *>(data),
                              data_size, 0, &f));
 
     FT_Set_Char_Size(f, 0, size * 64, 0, 0);

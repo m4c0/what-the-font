@@ -52,17 +52,16 @@ public:
 };
 class glyph_list {
   raii::face m_face;
-  hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
+  raii::buffer m_buffer;
 
   unsigned m_count{};
   hb_glyph_position_t *m_pos{};
   hb_glyph_info_t *m_info{};
 
 public:
-  explicit glyph_list(raii::face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
-    hb_buffer_reference(b);
-    m_info = hb_buffer_get_glyph_infos(b, &m_count);
-    m_pos = hb_buffer_get_glyph_positions(b, &m_count);
+  explicit glyph_list(raii::face f, raii::buffer b) : m_face{f}, m_buffer{b} {
+    m_info = hb_buffer_get_glyph_infos(*b, &m_count);
+    m_pos = hb_buffer_get_glyph_positions(*b, &m_count);
   }
 
   auto begin() { return glyph_iter{m_face, m_pos, m_info, 0}; }
@@ -71,12 +70,12 @@ public:
 
 class buffer {
   raii::face m_face;
-  hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
+  raii::buffer m_buffer;
 
 public:
-  buffer(raii::face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {}
+  buffer(raii::face f, raii::buffer b) : m_face{f}, m_buffer{b} {}
 
-  [[nodiscard]] auto glyphs() const { return glyph_list{m_face, *m_buffer}; }
+  [[nodiscard]] auto glyphs() const { return glyph_list{m_face, m_buffer}; }
 
   auto bounding_box() const {
     struct box {
@@ -133,12 +132,12 @@ public:
       , m_font{hb_ft_font_create_referenced(*f)} {}
 
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
-    auto buf = hb_buffer_create();
-    hb_buffer_add_utf8(buf, msg.data(), msg.size(), 0, -1);
-    hb_buffer_set_direction(buf, HB_DIRECTION_LTR);
-    hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
-    hb_buffer_set_language(buf, hb_language_from_string(lang, -1));
-    hb_shape(*m_font, buf, nullptr, 0);
+    raii::buffer buf{};
+    hb_buffer_add_utf8(*buf, msg.data(), msg.size(), 0, -1);
+    hb_buffer_set_direction(*buf, HB_DIRECTION_LTR);
+    hb_buffer_set_script(*buf, HB_SCRIPT_LATIN);
+    hb_buffer_set_language(*buf, hb_language_from_string(lang, -1));
+    hb_shape(*m_font, *buf, nullptr, 0);
     return buffer{m_face, buf};
   }
 
@@ -151,9 +150,11 @@ public:
 };
 
 export class library {
-  raii::library m_library{};
+  hai::value_holder<FT_Library, raii::deleter> m_library{};
 
 public:
+  library() { check(FT_Init_FreeType(&*m_library)); }
+
   [[nodiscard]] auto new_face(const char *font, unsigned size) {
     raii::face f{};
     check(FT_New_Face(*m_library, font, 0, &*f));

@@ -11,6 +11,28 @@ struct deleter {
   void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
 };
 
+class buffer {
+  hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer{};
+
+public:
+  buffer() : m_buffer{hb_buffer_create()} {}
+
+  buffer(buffer &&o) = delete;
+  buffer &operator=(buffer &&o) = delete;
+
+  buffer(const buffer &o) : m_buffer{*o.m_buffer} {
+    hb_buffer_reference(*m_buffer);
+  }
+  buffer &operator=(const buffer &o) {
+    m_buffer = decltype(m_buffer){*o.m_buffer};
+    hb_buffer_reference(*m_buffer);
+    return *this;
+  }
+
+  [[nodiscard]] constexpr auto &operator*() noexcept { return *m_buffer; }
+  [[nodiscard]] constexpr auto &operator*() const noexcept { return *m_buffer; }
+};
+
 class face {
   hai::value_holder<FT_Face, deleter> m_face{};
 
@@ -29,16 +51,5 @@ public:
 
   [[nodiscard]] constexpr auto &operator*() noexcept { return *m_face; }
   [[nodiscard]] constexpr auto &operator*() const noexcept { return *m_face; }
-};
-
-class library {
-  hai::value_holder<FT_Library, deleter> m_library{};
-
-public:
-  library() { check(FT_Init_FreeType(&*m_library)); }
-
-  [[nodiscard]] constexpr auto &operator*() const noexcept {
-    return *m_library;
-  }
 };
 } // namespace wtf::raii

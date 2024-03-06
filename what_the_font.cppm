@@ -25,6 +25,30 @@ public:
     check(FT_Load_Glyph(*m_face, m_info->codepoint, ft_load_render));
     return (*m_face)->glyph;
   }
+
+  void blit(unsigned char *img, unsigned img_w, unsigned img_h, unsigned pen_x,
+            unsigned pen_y) {
+    auto slot = load_glyph();
+    auto &bmp = slot->bitmap;
+    for (auto by = 0; by < bmp.rows; by++) {
+      for (auto bx = 0; bx < bmp.width; bx++) {
+        auto x = bx + slot->bitmap_left + pen_x;
+        auto y = by - slot->bitmap_top + pen_y;
+        auto bp = by * bmp.pitch + bx;
+
+        if ((x < 0) || (x >= img_w))
+          continue;
+        if ((y < 0) || (y >= img_h))
+          continue;
+
+        auto ip = y * img_w + x;
+
+        auto &ii = img[ip];
+        auto bi = bmp.buffer[bp];
+        ii = ii > bi ? ii : bi;
+      }
+    }
+  }
 };
 
 class glyph_iter {
@@ -94,26 +118,7 @@ public:
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
             int *pen_y) const {
     for (auto g : glyphs()) {
-      auto slot = g.load_glyph();
-      auto &bmp = slot->bitmap;
-      for (auto by = 0; by < bmp.rows; by++) {
-        for (auto bx = 0; bx < bmp.width; bx++) {
-          auto x = bx + slot->bitmap_left + *pen_x;
-          auto y = by - slot->bitmap_top + *pen_y;
-          auto bp = by * bmp.pitch + bx;
-
-          if ((x < 0) || (x >= img_w))
-            continue;
-          if ((y < 0) || (y >= img_h))
-            continue;
-
-          auto ip = y * img_w + x;
-
-          auto &ii = img[ip];
-          auto bi = bmp.buffer[bp];
-          ii = ii > bi ? ii : bi;
-        }
-      }
+      g.blit(img, img_w, img_h, *pen_x, *pen_y);
       *pen_x += g.x_advance();
       *pen_y += g.y_advance();
     }

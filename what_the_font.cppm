@@ -29,19 +29,38 @@ struct deleter {
   void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
 };
 
-static auto load_glyph(FT_Face f, unsigned index) {
-  check(FT_Load_Glyph(f, index, ft_load_render));
-  return f->glyph;
-}
+class glyph {
+  FT_Face m_face;
+  hb_glyph_position_t *m_pos;
+  hb_glyph_info_t *m_info;
+
+public:
+  constexpr glyph(FT_Face f, hb_glyph_position_t *p, hb_glyph_info_t *i)
+      : m_face{f}
+      , m_pos{p}
+      , m_info{i} {}
+
+  constexpr auto codepoint() const noexcept { return m_info->codepoint; }
+  constexpr auto x_advance() const noexcept { return m_pos->x_advance / 64; }
+  constexpr auto y_advance() const noexcept { return m_pos->y_advance / 64; }
+
+  auto load_glyph() {
+    check(FT_Load_Glyph(m_face, m_info->codepoint, ft_load_render));
+    return m_face->glyph;
+  }
+};
 
 class glyph_iter {
+  FT_Face m_face;
   unsigned m_idx;
   hb_glyph_position_t *m_pos{};
   hb_glyph_info_t *m_info{};
 
 public:
-  glyph_iter(hb_glyph_position_t *p, hb_glyph_info_t *i, unsigned idx)
-      : m_idx{idx}
+  glyph_iter(FT_Face f, hb_glyph_position_t *p, hb_glyph_info_t *i,
+             unsigned idx)
+      : m_face{f}
+      , m_idx{idx}
       , m_pos{p}
       , m_info{i} {}
 
@@ -53,14 +72,7 @@ public:
     return *this;
   }
   constexpr auto operator*() {
-    struct res {
-      hb_glyph_position_t *pos;
-      hb_glyph_info_t *info;
-    };
-    return res{
-        .pos = m_pos + m_idx,
-        .info = m_info + m_idx,
-    };
+    return glyph{m_face, m_pos + m_idx, m_info + m_idx};
   }
 };
 class glyph_list {
@@ -78,8 +90,8 @@ public:
     m_pos = hb_buffer_get_glyph_positions(b, &m_count);
   }
 
-  auto begin() const { return glyph_iter{m_pos, m_info, 0}; }
-  auto end() const { return glyph_iter{m_pos, m_info, m_count}; }
+  auto begin() { return glyph_iter{*m_face, m_pos, m_info, 0}; }
+  auto end() { return glyph_iter{*m_face, m_pos, m_info, m_count}; }
 };
 
 class buffer {
@@ -99,8 +111,8 @@ public:
       int h{};
     } res;
     for (auto g : glyphs()) {
-      res.w += g.pos->x_advance / 64;
-      res.h += g.pos->y_advance / 64;
+      res.w += g.x_advance();
+      res.h += g.y_advance();
     }
     return res;
   }
@@ -112,7 +124,7 @@ public:
   void draw(unsigned char *img, unsigned img_w, unsigned img_h, int *pen_x,
             int *pen_y) const {
     for (auto g : glyphs()) {
-      auto slot = load_glyph(*m_face, g.info->codepoint);
+      auto slot = g.load_glyph();
       auto &bmp = slot->bitmap;
       for (auto by = 0; by < bmp.rows; by++) {
         for (auto bx = 0; bx < bmp.width; bx++) {
@@ -132,8 +144,8 @@ public:
           ii = ii > bi ? ii : bi;
         }
       }
-      *pen_x += g.pos->x_advance / 64;
-      *pen_y += g.pos->y_advance / 64;
+      *pen_x += g.x_advance();
+      *pen_y += g.y_advance();
     }
   }
 };
@@ -145,14 +157,6 @@ export class face {
 public:
   explicit face(FT_Face f)
       : m_face{f}, m_font{hb_ft_font_create_referenced(f)} {}
-
-  [[nodiscard]] constexpr auto operator*() const noexcept { return *m_font; }
-
-  [[nodiscard]] auto load_glyph(unsigned index) const {
-    check(FT_Load_Glyph(*m_face, index, ft_load_render));
-
-    return (*m_face)->glyph;
-  }
 
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     auto buf = hb_buffer_create();

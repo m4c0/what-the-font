@@ -36,9 +36,11 @@ int main() try {
   }
 
   unsigned char charmap[img_w * img_h]{};
+  // unsigned px{};
+  // unsigned py{};
   for (auto line : text) {
     for (auto g : f.shape_pt(line).glyphs()) {
-      charmap[g.info->codepoint] = 255;
+      charmap[g.codepoint()] = 255;
     }
   }
 

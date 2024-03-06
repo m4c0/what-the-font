@@ -39,19 +39,22 @@ int main() try {
   unsigned curid{};
   unsigned char charmap[img_w * img_h]{};
   unsigned px{};
-  unsigned py{font_h};
+  unsigned py{};
   for (auto line : text) {
     for (auto g : f.shape_pt(line).glyphs()) {
       auto &id = charid[g.codepoint()];
       if (id > 0)
         continue;
 
+      g.load_glyph();
+      auto [x, y, w, h] = g.bitmap_rect();
+
       id = ++curid;
-      g.blit(charmap, img_w, img_h, px, py);
-      px += g.x_advance();
+      g.blit(charmap, img_w, img_h, px - x + 1, py + y + 1);
+      px += w + 2; // TODO: fix overflow
       if (px > img_w) {
         px = 0;
-        py += font_h;
+        py += font_h; // TODO: max(h + 2)
       }
     }
   }

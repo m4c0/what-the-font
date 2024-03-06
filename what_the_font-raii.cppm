@@ -11,6 +11,26 @@ struct deleter {
   void operator()(hb_buffer_t *f) { hb_buffer_destroy(f); }
 };
 
+class face {
+  hai::value_holder<FT_Face, deleter> m_face{};
+
+public:
+  constexpr face() = default;
+
+  face(face &&o) = delete;
+  face &operator=(face &&o) = delete;
+
+  face(const face &o) : m_face{*o.m_face} { check(FT_Reference_Face(*m_face)); }
+  face &operator=(const face &o) {
+    m_face = decltype(m_face){*o.m_face};
+    check(FT_Reference_Face(*m_face));
+    return *this;
+  }
+
+  [[nodiscard]] constexpr auto &operator*() noexcept { return *m_face; }
+  [[nodiscard]] constexpr auto &operator*() const noexcept { return *m_face; }
+};
+
 class library {
   hai::value_holder<FT_Library, deleter> m_library{};
 

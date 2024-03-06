@@ -7,12 +7,12 @@ import jute;
 
 namespace wtf {
 class glyph {
-  FT_Face m_face;
+  raii::face m_face;
   hb_glyph_position_t *m_pos;
   hb_glyph_info_t *m_info;
 
 public:
-  constexpr glyph(FT_Face f, hb_glyph_position_t *p, hb_glyph_info_t *i)
+  glyph(raii::face f, hb_glyph_position_t *p, hb_glyph_info_t *i)
       : m_face{f}
       , m_pos{p}
       , m_info{i} {}
@@ -22,19 +22,19 @@ public:
   constexpr auto y_advance() const noexcept { return m_pos->y_advance / 64; }
 
   auto load_glyph() {
-    check(FT_Load_Glyph(m_face, m_info->codepoint, ft_load_render));
-    return m_face->glyph;
+    check(FT_Load_Glyph(*m_face, m_info->codepoint, ft_load_render));
+    return (*m_face)->glyph;
   }
 };
 
 class glyph_iter {
-  FT_Face m_face;
+  raii::face m_face;
   unsigned m_idx;
   hb_glyph_position_t *m_pos{};
   hb_glyph_info_t *m_info{};
 
 public:
-  glyph_iter(FT_Face f, hb_glyph_position_t *p, hb_glyph_info_t *i,
+  glyph_iter(raii::face f, hb_glyph_position_t *p, hb_glyph_info_t *i,
              unsigned idx)
       : m_face{f}
       , m_idx{idx}
@@ -48,12 +48,10 @@ public:
     m_idx++;
     return *this;
   }
-  constexpr auto operator*() {
-    return glyph{m_face, m_pos + m_idx, m_info + m_idx};
-  }
+  auto operator*() { return glyph{m_face, m_pos + m_idx, m_info + m_idx}; }
 };
 class glyph_list {
-  hai::value_holder<FT_Face, raii::deleter> m_face;
+  raii::face m_face;
   hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
 
   unsigned m_count{};
@@ -61,26 +59,24 @@ class glyph_list {
   hb_glyph_info_t *m_info{};
 
 public:
-  explicit glyph_list(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
+  explicit glyph_list(raii::face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
     hb_buffer_reference(b);
     m_info = hb_buffer_get_glyph_infos(b, &m_count);
     m_pos = hb_buffer_get_glyph_positions(b, &m_count);
   }
 
-  auto begin() { return glyph_iter{*m_face, m_pos, m_info, 0}; }
-  auto end() { return glyph_iter{*m_face, m_pos, m_info, m_count}; }
+  auto begin() { return glyph_iter{m_face, m_pos, m_info, 0}; }
+  auto end() { return glyph_iter{m_face, m_pos, m_info, m_count}; }
 };
 
 class buffer {
-  hai::value_holder<FT_Face, raii::deleter> m_face;
+  raii::face m_face;
   hai::value_holder<hb_buffer_t *, raii::deleter> m_buffer;
 
 public:
-  buffer(FT_Face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {
-    FT_Reference_Face(f);
-  }
+  buffer(raii::face f, hb_buffer_t *b) : m_face{f}, m_buffer{b} {}
 
-  [[nodiscard]] auto glyphs() const { return glyph_list{*m_face, *m_buffer}; }
+  [[nodiscard]] auto glyphs() const { return glyph_list{m_face, *m_buffer}; }
 
   auto bounding_box() const {
     struct box {
@@ -128,13 +124,13 @@ public:
 };
 
 export class face {
-  hai::value_holder<FT_Face, raii::deleter> m_face;
+  raii::face m_face;
   hai::value_holder<hb_font_t *, raii::deleter> m_font;
 
 public:
-  explicit face(FT_Face f)
+  explicit face(raii::face f)
       : m_face{f}
-      , m_font{hb_ft_font_create_referenced(f)} {}
+      , m_font{hb_ft_font_create_referenced(*f)} {}
 
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     auto buf = hb_buffer_create();
@@ -143,7 +139,7 @@ public:
     hb_buffer_set_script(buf, HB_SCRIPT_LATIN);
     hb_buffer_set_language(buf, hb_language_from_string(lang, -1));
     hb_shape(*m_font, buf, nullptr, 0);
-    return buffer{*m_face, buf};
+    return buffer{m_face, buf};
   }
 
   [[nodiscard]] auto shape_en(jute::view msg) {
@@ -159,20 +155,20 @@ export class library {
 
 public:
   [[nodiscard]] auto new_face(const char *font, unsigned size) {
-    FT_Face f;
-    check(FT_New_Face(*m_library, font, 0, &f));
+    raii::face f{};
+    check(FT_New_Face(*m_library, font, 0, &*f));
 
-    FT_Set_Char_Size(f, 0, size * 64, 0, 0);
+    FT_Set_Char_Size(*f, 0, size * 64, 0, 0);
     return face{f};
   }
 
   [[nodiscard]] auto new_memory_face(const void *data, unsigned data_size,
                                      unsigned size) {
-    FT_Face f;
+    raii::face f{};
     check(FT_New_Memory_Face(*m_library, static_cast<const FT_Byte *>(data),
-                             data_size, 0, &f));
+                             data_size, 0, &*f));
 
-    FT_Set_Char_Size(f, 0, size * 64, 0, 0);
+    FT_Set_Char_Size(*f, 0, size * 64, 0, 0);
     return face{f};
   }
 };

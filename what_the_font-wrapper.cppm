@@ -29,6 +29,7 @@ constexpr const auto FT_Set_Char_Size = &::FT_Set_Char_Size;
 constexpr const auto hb_buffer_add_utf8 = &::hb_buffer_add_utf8;
 constexpr const auto hb_buffer_create = &::hb_buffer_create;
 constexpr const auto hb_buffer_destroy = &::hb_buffer_destroy;
+constexpr const auto hb_buffer_get_length = &::hb_buffer_get_length;
 constexpr const auto hb_buffer_get_glyph_infos = &::hb_buffer_get_glyph_infos;
 constexpr const auto hb_buffer_get_glyph_positions =
     &::hb_buffer_get_glyph_positions;

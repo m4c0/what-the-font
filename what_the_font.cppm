@@ -29,43 +29,41 @@ public:
 
 class glyph_iter {
   raii::face m_face;
+  raii::buffer m_buffer;
   unsigned m_idx;
-  hb_glyph_position_t *m_pos{};
-  hb_glyph_info_t *m_info{};
 
 public:
-  glyph_iter(raii::face f, hb_glyph_position_t *p, hb_glyph_info_t *i,
-             unsigned idx)
+  glyph_iter(raii::face f, raii::buffer b, unsigned idx)
       : m_face{f}
-      , m_idx{idx}
-      , m_pos{p}
-      , m_info{i} {}
+      , m_buffer{b}
+      , m_idx{idx} {}
 
   constexpr auto operator==(const glyph_iter &o) const {
-    return m_idx == o.m_idx && m_pos == o.m_pos && m_info == o.m_info;
+    return m_idx == o.m_idx && *m_buffer == *o.m_buffer;
   }
   constexpr auto &operator++() {
     m_idx++;
     return *this;
   }
-  auto operator*() { return glyph{m_face, m_pos + m_idx, m_info + m_idx}; }
+  auto operator*() {
+    auto info = hb_buffer_get_glyph_infos(*m_buffer, nullptr);
+    auto pos = hb_buffer_get_glyph_positions(*m_buffer, nullptr);
+    return glyph{m_face, pos + m_idx, info + m_idx};
+  }
 };
 class glyph_list {
   raii::face m_face;
   raii::buffer m_buffer;
-
   unsigned m_count{};
-  hb_glyph_position_t *m_pos{};
-  hb_glyph_info_t *m_info{};
 
 public:
-  explicit glyph_list(raii::face f, raii::buffer b) : m_face{f}, m_buffer{b} {
-    m_info = hb_buffer_get_glyph_infos(*b, &m_count);
-    m_pos = hb_buffer_get_glyph_positions(*b, &m_count);
-  }
+  explicit glyph_list(raii::face f, raii::buffer b)
+      : m_face{f}
+      , m_buffer{b}
+      , m_count{hb_buffer_get_length(*m_buffer)} {}
 
-  auto begin() { return glyph_iter{m_face, m_pos, m_info, 0}; }
-  auto end() { return glyph_iter{m_face, m_pos, m_info, m_count}; }
+  auto begin() { return glyph_iter{m_face, m_buffer, 0}; }
+  auto end() { return glyph_iter{m_face, m_buffer, m_count}; }
 };
 
 class buffer {

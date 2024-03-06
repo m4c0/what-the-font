@@ -35,12 +35,24 @@ int main() try {
     f.shape_pt(line).draw(img, img_w, img_h, x, y);
   }
 
+  unsigned charid[10240];
+  unsigned curid{};
   unsigned char charmap[img_w * img_h]{};
-  // unsigned px{};
-  // unsigned py{};
+  unsigned px{};
+  unsigned py{font_h};
   for (auto line : text) {
     for (auto g : f.shape_pt(line).glyphs()) {
-      charmap[g.codepoint()] = 255;
+      auto &id = charid[g.codepoint()];
+      if (id > 0)
+        continue;
+
+      id = ++curid;
+      g.blit(charmap, img_w, img_h, px, py);
+      px += g.x_advance();
+      if (px > img_w) {
+        px = 0;
+        py += font_h;
+      }
     }
   }
 

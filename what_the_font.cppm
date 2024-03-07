@@ -6,6 +6,13 @@ import hai;
 import jute;
 
 namespace wtf {
+export struct rect {
+  int x;
+  int y;
+  int w;
+  int h;
+};
+
 class glyph {
   raii::face m_face;
   hb_glyph_position_t *m_pos;
@@ -22,12 +29,7 @@ public:
   constexpr auto y_advance() const noexcept { return m_pos->y_advance / 64; }
 
   constexpr auto bitmap_rect() const noexcept {
-    struct {
-      int x;
-      int y;
-      int w;
-      int h;
-    } res;
+    rect res;
     res.x = (*m_face)->glyph->bitmap_left;
     res.y = (*m_face)->glyph->bitmap_top;
     res.w = (*m_face)->glyph->bitmap.width;

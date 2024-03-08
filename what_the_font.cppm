@@ -106,7 +106,7 @@ public:
   auto end() { return glyph_iter{m_face, m_buffer, m_count}; }
 };
 
-class buffer {
+export class buffer {
   raii::face m_face;
   raii::buffer m_buffer;
 

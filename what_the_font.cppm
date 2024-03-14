@@ -144,12 +144,10 @@ public:
 
 export class face {
   raii::face m_face;
-  hai::value_holder<hb_font_t *, raii::deleter> m_font;
+  raii::font m_font;
 
 public:
-  explicit face(raii::face f)
-      : m_face{f}
-      , m_font{hb_ft_font_create_referenced(*f)} {}
+  explicit face(raii::face f) : m_face{f}, m_font{*f} {}
 
   // Font size is given in pixels. This dictates the size of the glyph bitmap.
   void set_char_size(unsigned size) {

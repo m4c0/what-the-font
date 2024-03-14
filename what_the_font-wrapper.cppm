@@ -38,6 +38,7 @@ constexpr const auto hb_buffer_set_direction = &::hb_buffer_set_direction;
 constexpr const auto hb_buffer_set_language = &::hb_buffer_set_language;
 constexpr const auto hb_buffer_set_script = &::hb_buffer_set_script;
 constexpr const auto hb_font_destroy = &::hb_font_destroy;
+constexpr const auto hb_font_reference = &::hb_font_reference;
 constexpr const auto hb_language_from_string = &::hb_language_from_string;
 constexpr const auto hb_ft_font_create_referenced =
     &::hb_ft_font_create_referenced;

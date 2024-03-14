@@ -52,4 +52,24 @@ public:
   [[nodiscard]] constexpr auto &operator*() noexcept { return *m_face; }
   [[nodiscard]] constexpr auto &operator*() const noexcept { return *m_face; }
 };
+
+class font {
+  hai::value_holder<hb_font_t *, raii::deleter> m_font{};
+
+public:
+  font(FT_Face f) : m_font{hb_ft_font_create_referenced(f)} {}
+
+  font(font &&o) = delete;
+  font &operator=(font &&o) = delete;
+
+  font(const font &o) : m_font{*o.m_font} { hb_font_reference(*m_font); }
+  font &operator=(const font &o) {
+    m_font = decltype(m_font){*o.m_font};
+    hb_font_reference(*m_font);
+    return *this;
+  }
+
+  [[nodiscard]] constexpr auto &operator*() noexcept { return *m_font; }
+  [[nodiscard]] constexpr auto &operator*() const noexcept { return *m_font; }
+};
 } // namespace wtf::raii

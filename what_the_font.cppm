@@ -175,6 +175,7 @@ export class library {
 public:
   library() { check(FT_Init_FreeType(&*m_library)); }
 
+  // Font size is given in pixels. This dictates the size of the glyph bitmap.
   [[nodiscard]] auto new_face(const char *font, unsigned size) {
     raii::face f{};
     check(FT_New_Face(*m_library, font, 0, &*f));

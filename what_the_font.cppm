@@ -151,6 +151,11 @@ public:
       : m_face{f}
       , m_font{hb_ft_font_create_referenced(*f)} {}
 
+  // Font size is given in pixels. This dictates the size of the glyph bitmap.
+  void set_char_size(unsigned size) {
+    FT_Set_Char_Size(*m_face, 0, size * 64, 0, 0);
+  }
+
   [[nodiscard]] auto shape_latin_ltr(jute::view msg, const char *lang) {
     raii::buffer buf{};
     hb_buffer_add_utf8(*buf, msg.data(), msg.size(), 0, -1);
@@ -175,22 +180,16 @@ export class library {
 public:
   library() { check(FT_Init_FreeType(&*m_library)); }
 
-  // Font size is given in pixels. This dictates the size of the glyph bitmap.
-  [[nodiscard]] auto new_face(const char *font, unsigned size) {
+  [[nodiscard]] auto new_face(const char *font) {
     raii::face f{};
     check(FT_New_Face(*m_library, font, 0, &*f));
-
-    FT_Set_Char_Size(*f, 0, size * 64, 0, 0);
     return face{f};
   }
 
-  [[nodiscard]] auto new_memory_face(const void *data, unsigned data_size,
-                                     unsigned size) {
+  [[nodiscard]] auto new_memory_face(const void *data, unsigned data_size) {
     raii::face f{};
     check(FT_New_Memory_Face(*m_library, static_cast<const FT_Byte *>(data),
                              data_size, 0, &*f));
-
-    FT_Set_Char_Size(*f, 0, size * 64, 0, 0);
     return face{f};
   }
 };

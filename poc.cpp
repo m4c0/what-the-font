@@ -20,7 +20,8 @@ int main() try {
   constexpr const auto margin_x = margin_y;
 
   constexpr const auto test_font = "VictorMono-Regular.otf";
-  auto f = l.new_face(test_font, font_h);
+  auto f = l.new_face(test_font);
+  f.set_char_size(font_h);
 
   constexpr jute::view text[]{
       "Minha terra tem palmeiras,",

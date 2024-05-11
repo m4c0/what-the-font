@@ -8,7 +8,6 @@ void longjmp(jmp_buf env, int val) { abort(); }
 int setjmp(jmp_buf env) {}
 #endif
 
-#pragma leco add_include_dir "freetype/include"
 #define FT_CONFIG_MODULES_H "../../../ftmodule.h"
 #define FT_CONFIG_OPTION_ERROR_STRINGS
 #define FT2_BUILD_LIBRARY

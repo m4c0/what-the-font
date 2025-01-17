@@ -4,7 +4,7 @@ import silog;
 import yoyo;
 import what_the_font;
 
-void fail(const char *msg) { throw 0; }
+void fail(jute::view msg) { throw 0; }
 
 int main() try {
   wtf::library l{};
@@ -60,7 +60,7 @@ int main() try {
     }
   }
 
-  yoyo::file_writer out{"out/result.pgm"};
+  auto out = yoyo::file_writer::open("out/result.pgm").take(fail);
   out.writef("P2\n%d %d 256\n", img_w, img_h * 2).take(fail);
   for (auto c : img)
     out.writef("%d ", c).take(fail);

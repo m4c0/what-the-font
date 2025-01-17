@@ -1,3 +1,4 @@
+#pragma leco add_include_dir "freetype/include"
 extern "C" {
 #ifdef __wasm__
 struct jmp_buf {

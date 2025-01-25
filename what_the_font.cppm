@@ -2,6 +2,7 @@ export module what_the_font;
 export import :error;
 import :raii;
 import :wrapper;
+import dotz;
 import hai;
 import jute;
 
@@ -116,13 +117,10 @@ public:
   [[nodiscard]] auto glyphs() const { return glyph_list{m_face, m_buffer}; }
 
   auto bounding_box() const {
-    struct box {
-      int w{};
-      int h{};
-    } res;
+    dotz::ivec2 res {};
     for (auto g : glyphs()) {
-      res.w += g.x_advance();
-      res.h += g.y_advance();
+      res.x += g.x_advance();
+      res.y += g.y_advance();
     }
     return res;
   }

@@ -1,6 +1,6 @@
 [submodule "freetype"]
-	path = freetype
+	path = ext/freetype
 	url = https://github.com/freetype/freetype.git
 [submodule "harfbuzz"]
-	path = harfbuzz
+	path = ext/harfbuzz
 	url = https://github.com/harfbuzz/harfbuzz.git

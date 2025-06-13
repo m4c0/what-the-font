@@ -1,7 +1,6 @@
 module;
-#pragma leco add_include_dir "freetype/include"
 #pragma leco add_impl freetype harfbuzz
-#include "harfbuzz/src/hb-ft.h"
+#include "ext/harfbuzz/src/hb-ft.h"
 
 export module what_the_font:wrapper;
 

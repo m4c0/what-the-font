@@ -1,4 +1,3 @@
-extern "C" {
 #ifdef __wasm__
 struct jmp_buf {
   int x;
@@ -26,4 +25,3 @@ int setjmp(jmp_buf env) {}
 #include "ext/freetype/src/sfnt/sfnt.c"
 #include "ext/freetype/src/smooth/smooth.c"
 #include "ext/freetype/src/truetype/truetype.c"
-}

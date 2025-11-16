@@ -7,6 +7,8 @@ void longjmp(jmp_buf env, int val) { abort(); }
 int setjmp(jmp_buf env) {}
 #endif
 
+#pragma clang diagnostic ignored "-Wmacro-redefined"
+
 #define FT_CONFIG_MODULES_H "ftmodule.h"
 #define FT_CONFIG_OPTION_ERROR_STRINGS
 #define FT2_BUILD_LIBRARY

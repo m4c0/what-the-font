@@ -1,8 +1,10 @@
 #pragma leco tool
+import hay;
 import jute;
-import silog;
-import yoyo;
+import print;
 import what_the_font;
+
+#include <stdio.h>
 
 void fail(jute::view msg) { throw 0; }
 
@@ -60,12 +62,10 @@ int main() try {
     }
   }
 
-  auto out = yoyo::file_writer::open("out/result.pgm").take(fail);
-  out.writef("P2\n%d %d 256\n", img_w, img_h * 2).take(fail);
-  for (auto c : img)
-    out.writef("%d ", c).take(fail);
-  for (auto c : charmap)
-    out.writef("%d ", c).take(fail);
+  hay<FILE *, fopen, fclose> out { "out/result.pgm", "wb" };
+  fputfn(out, "P2\n%d %d 256", img_w, img_h * 2);
+  for (int c : img) fputf(out, "%d ", c);
+  for (int c : charmap) fputf(out, "%d ", c);
 } catch (const wtf::ft_error &e) {
-  silog::log(silog::error, "Failed with freetype error [%s]", e.what());
+  dief("Failed with freetype error [%s]", e.what());
 }

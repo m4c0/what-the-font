@@ -1,4 +1,5 @@
 module;
+#pragma leco add_include_dir .
 #pragma leco add_impl freetype harfbuzz
 #include "ext/harfbuzz/src/hb-ft.h"
 
